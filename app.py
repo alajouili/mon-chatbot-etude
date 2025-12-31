@@ -14,15 +14,14 @@ from langchain_core.prompts import ChatPromptTemplate
 st.set_page_config(page_title="Mon Assistant RAG", page_icon="🤖")
 st.title("🤖 Assistant d'Étude (Via Groq)")
 
-# --- 1. Récupération de la clé API (Sécurité) ---
-# Le code va chercher la clé dans les "coffres-forts" de Streamlit
+# --- 1. Récupération de la clé API ---
 try:
     groq_api_key = st.secrets["GROQ_API_KEY"]
 except:
     st.error("Erreur : La clé API Groq est manquante dans les secrets.")
     st.stop()
 
-# --- 2. Initialisation de la Session (Mémoire) ---
+# --- 2. Initialisation de la Session ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -49,32 +48,27 @@ with st.sidebar:
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
             splits = text_splitter.split_documents(docs)
             
-            # Indexation (Utilisation d'un modèle gratuit HuggingFace)
+            # Indexation
             embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
             vectorstore = Chroma.from_documents(documents=splits, embedding=embeddings)
             
-            # Sauvegarde dans la mémoire de l'app
+            # Sauvegarde dans la mémoire
             st.session_state.vectorstore = vectorstore
             os.remove(tmp_path)
             st.success("Document prêt !")
 
 # --- 4. Interface de Chat ---
-# Afficher l'historique
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Zone de saisie
 if prompt_text := st.chat_input("Pose ta question sur le cours..."):
-    # Afficher la question
     st.chat_message("user").markdown(prompt_text)
     st.session_state.messages.append({"role": "user", "content": prompt_text})
 
     if st.session_state.vectorstore is not None:
-        # Préparation du cerveau (Groq - Llama3 ou Mixtral)
         llm = ChatGroq(groq_api_key=groq_api_key, model_name="mixtral-8x7b-32768")
         
-        # Le RAG
         retriever = st.session_state.vectorstore.as_retriever()
         
         system_prompt = (
@@ -92,7 +86,6 @@ if prompt_text := st.chat_input("Pose ta question sur le cours..."):
         chain = create_stuff_documents_chain(llm, prompt)
         rag_chain = create_retrieval_chain(retriever, chain)
         
-        # Réponse
         with st.spinner("Réflexion..."):
             response = rag_chain.invoke({"input": prompt_text})
             answer = response["answer"]
