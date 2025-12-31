@@ -10,7 +10,7 @@ from langchain_community.embeddings import SentenceTransformerEmbeddings
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Mon Professeur IA", page_icon="🤖")
 
-st.title("🤖 Chatbot de Révision de Cours")
+st.title("🤖 Chatbot de Révision de Cours avec Ala")
 st.write("Télécharge ton cours en PDF et pose tes questions !")
 
 # --- SIDEBAR (Barre latérale pour la clé et le fichier) ---
